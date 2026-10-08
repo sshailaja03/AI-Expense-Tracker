@@ -1,97 +1,115 @@
 # AI-Powered Expense Tracker
 
-> A full-stack expense tracking application that pairs a modern React interface with hand-implemented core data structures and algorithms (DSA) for sorting, searching, aggregation, and ranking — rather than relying solely on built-in language utilities.
+> A full-stack expense management application combining React, Node.js, MongoDB, practical data structures and algorithms, and AI-generated spending insights.
 
----
+## Why This Project
 
-## Table of Contents
+Expense trackers are usually simple CRUD applications. This project goes further by using core DSA concepts for real application features such as sorting, date-range search, category aggregation, and top-expense ranking.
 
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Architecture](#architecture)
-- [Project Structure](#project-structure)
-- [DSA Concepts Used](#dsa-concepts-used)
-- [Data Flow](#data-flow)
-- [Complexity Summary](#complexity-summary)
-- [Getting Started](#getting-started)
-- [Running the DSA Test Suite](#running-the-dsa-test-suite)
-- [Roadmap](#roadmap)
-- [License](#license)
-
----
-
-## Overview
-
-Ledger is an expense tracking application built to demonstrate that classic data structures and algorithms have real, practical value in everyday application logic — not just interview prep. Every core operation in the app (sorting the ledger, filtering by date range, computing category totals, ranking top expenses, and tracking unique categories) is backed by a custom, from-scratch implementation rather than a built-in method, with each choice justified by its time/space complexity.
-
-The frontend is a React + Vite single-page application; the backend exposes this DSA logic as reusable, framework-agnostic modules that can be tested independently of any database or HTTP layer.
-
----
+It demonstrates how **computer science fundamentals can be applied inside a real product**, rather than existing only as isolated interview problems.
 
 ## Features
 
-- **Add / remove expenses** with description, amount, category, and date
-- **Category filtering** (All, Food, Transport, Education, Entertainment, etc.)
-- **Sortable ledger** by date or amount, ascending or descending
-- **Date-range search** for quickly isolating expenses within a window
-- **Spend-by-category visualization** computed via hashmap aggregation
-- **Top-N expense ranking** computed via a custom max-heap
-- **Unique category tracking** via a Set, used to drive dynamic filter pills
-- **AI-generated spending insights** on demand
-
----
+- Add and remove expenses with description, amount, category, and date
+- Filter expenses by category
+- Sort the ledger by date or amount
+- Search expenses within a date range
+- Visualize spending by category and month
+- Rank the highest-value expenses
+- Track unique expense categories dynamically
+- Generate AI-powered spending insights
 
 ## Tech Stack
 
-| Layer      | Technology                          |
-|------------|--------------------------------------|
-| Frontend   | React, Vite                         |
-| Backend    | Node.js                             |
-| Database   | MongoDB                             |
-| Core Logic | Custom DSA modules (vanilla JS, no external algorithm libraries) |
-
----
+| Layer | Technology |
+|---|---|
+| Frontend | React, Vite |
+| Backend | Node.js |
+| Database | MongoDB |
+| Core Logic | Custom DSA modules in JavaScript |
+| AI | AI-powered insight generation |
 
 ## Architecture
 
-The application is split into three logical layers:
-
 ```
-┌─────────────────────┐        ┌──────────────────────┐        ┌───────────────┐
-│   React + Vite UI    │ <----> │   API / Server Layer  │ <----> │   MongoDB      │
-│  (components, charts,│  REST  │ (routes, controllers) │        │ (persisted     │
-│   ledger, filters)   │        │                        │        │  expenses)     │
-└─────────────────────┘        └──────────┬───────────┘        └───────────────┘
-                                            │
-                                            ▼
-                                 ┌───────────────────────┐
-                                 │     DSA Engine          │
-                                 │  (sorting, searching,   │
-                                 │   aggregation, heap,     │
-                                 │   set operations)        │
-                                 └───────────────────────┘
+React + Vite
+     │
+     │ REST API
+     ▼
+Node.js / Server
+     │
+     ├──────────────► MongoDB
+     │
+     ▼
+DSA Engine
+ ├─ Merge Sort
+ ├─ Binary Search
+ ├─ HashMap Aggregation
+ ├─ Set Operations
+ └─ Max-Heap
+     │
+     ▼
+AI Insight Service
 ```
 
-The DSA engine is intentionally decoupled from both the database and the HTTP layer. Each module accepts and returns plain JavaScript arrays/objects, which means:
+The DSA engine is separated from the HTTP and persistence layers. This keeps the algorithmic logic reusable and independently testable.
 
-- It can be unit tested in isolation (see `demo.js`)
-- It can be reused regardless of whether data originates from MongoDB, a REST payload, or a mock dataset
-- Swapping the persistence layer in the future would not require touching any algorithmic code
+## DSA & Engineering Highlights
 
----
+### Merge Sort
+Used to sort expenses by date or amount.
+
+- Time: **O(n log n)**
+- Space: **O(n)**
+
+### Binary Search
+Used for efficient date-range lookup after the ledger is sorted.
+
+- Time: **O(log n)** per boundary
+- Space: **O(1)** excluding the returned result
+
+### HashMap Aggregation
+Used to calculate category and monthly spending totals.
+
+- Time: **O(n)**
+- Space: **O(k)** for distinct keys
+
+### Set
+Used to maintain unique expense categories and power dynamic filters.
+
+- Build: **O(n)**
+- Average membership check: **O(1)**
+
+### Max-Heap
+Used to rank the highest-value expenses.
+
+- Build through insertion: **O(n log n)**
+- Top-k extraction: **O(k log n)**
+- Space: **O(n)**
+
+A future optimization is a fixed-size min-heap, reducing top-k retrieval to **O(n log k)** when k is small.
+
+## Data Flow
+
+1. Expenses are retrieved from MongoDB.
+2. Merge sort orders the records.
+3. Binary search narrows the data for date-range queries.
+4. HashMap aggregation calculates category/month totals.
+5. Set operations produce unique categories.
+6. Max-heap ranking identifies top expenses.
+7. The aggregated data is used to generate AI spending insights.
 
 ## Project Structure
 
 ```
 project-root/
-├── client/                     # React + Vite frontend
+├── client/
 │   └── src/
 │       ├── components/
 │       ├── pages/
 │       └── ...
-├── server/                     # Node.js backend
-│   ├── lib/                    # DSA engine (see below)
+├── server/
+│   ├── lib/
 │   │   ├── sorting.js
 │   │   ├── searching.js
 │   │   ├── aggregator.js
@@ -104,165 +122,88 @@ project-root/
 └── README.md
 ```
 
-> Adjust the paths above if your repository uses a different folder layout — the DSA modules themselves are framework-agnostic and can live anywhere.
-
----
-
-## DSA Concepts Used
-
-### 1. Merge Sort — `sorting.js`
-
-**Purpose:** Sorts the expense ledger by `date` or `amount`, in ascending or descending order.
-
-**Why a custom implementation:** Implementing merge sort explicitly guarantees a predictable O(n log n) worst case and demonstrates the divide-and-conquer paradigm, rather than depending on the underlying engine's native sort behavior.
-
-**How it works:** The array is recursively split into halves down to single-element (trivially sorted) subarrays, then merged back together in sorted order by comparing a configurable key (`date` or `amount`).
-
-- **Time Complexity:** O(n log n)
-- **Space Complexity:** O(n) — auxiliary arrays created during merge
-
-### 2. Binary Search — `searching.js`
-
-**Purpose:** Efficiently retrieves all expenses within a given date range from an already-sorted ledger.
-
-**How it works:** Rather than a single-target binary search, this module implements two boundary searches:
-- `binarySearchLeftBoundary` — finds the first index whose date is `>=` the range start
-- `binarySearchRightBoundary` — finds the last index whose date is `<=` the range end
-
-The slice between these two indices is the result set.
-
-**Precondition:** The input array must already be sorted by date — this module is designed to run immediately after `mergeSort`.
-
-- **Time Complexity:** O(log n) per boundary, O(log n) total for the range query
-- **Space Complexity:** O(1) (excluding the returned slice)
-- **Why it matters:** A linear scan over the ledger would cost O(n) per query; binary search reduces this to logarithmic time as the ledger grows.
-
-### 3. HashMap Aggregation — `aggregator.js`
-
-**Purpose:** Groups and totals expenses by category and by month, and computes overall total spend.
-
-**How it works:** A native JavaScript `Map` is used as a hashmap, with the category (or `YYYY-MM` month key) as the key and the running total as the value. Each expense is processed once, giving O(1) average-case lookup and update per entry.
-
-- **Time Complexity:** O(n) for a single pass over all expenses
-- **Space Complexity:** O(k), where k is the number of distinct categories or months
-- **Where it's used:** Powers the "Spend by Category" chart and monthly breakdowns.
-
-### 4. Set — `uniqueSet.js`
-
-**Purpose:** Tracks the distinct set of categories the user has ever used, and checks whether a given category already exists.
-
-**How it works:** A JavaScript `Set` is built from the category field of every expense, guaranteeing uniqueness natively.
-
-- **Time Complexity:** O(n) to build, O(1) average for membership checks
-- **Space Complexity:** O(k), where k is the number of unique categories
-- **Where it's used:** Drives the dynamic category filter pills in the UI.
-
-### 5. Max-Heap — `topExpenses.js`
-
-**Purpose:** Efficiently identifies the top-N largest expenses, powering the "Top Expenses" ranking panel.
-
-**How it works:** A binary max-heap is implemented from scratch (`insert` with `bubbleUp`, `extractMax` with `bubbleDown`), backed by a plain array with standard parent/child index arithmetic. All expenses are inserted, then the top N are extracted in descending order of amount.
-
-- **Time Complexity:** O(n log n) to insert all n expenses, O(k log n) to extract the top k
-- **Space Complexity:** O(n)
-- **Design note:** Because every expense is inserted into the heap, this implementation's overall cost is comparable to a full sort. For very large datasets where only a small, fixed k is needed, a **min-heap of size k** would reduce the build cost to O(n log k) by only retaining the k largest elements seen so far. This is a natural next optimization — see [Roadmap](#roadmap).
-
----
-
-## Data Flow
-
-A typical read operation through the app touches several DSA modules in sequence:
-
-1. Expenses are fetched from MongoDB as a raw array.
-2. **Merge sort** orders the array by date (required for binary search to work correctly).
-3. **Binary search** narrows the array to a specific date range, if the user has applied one.
-4. **HashMap aggregation** computes category and monthly totals for the charts.
-5. **Set** operations derive the list of unique categories to render as filter pills.
-6. **Max-heap** extraction produces the top-N expenses for the ranking panel.
-7. The AI insight endpoint consumes the aggregated summary to generate a natural-language observation.
-
----
-
-## Complexity Summary
-
-| Concept       | File              | Operation                  | Time Complexity                  | Space Complexity |
-|---------------|-------------------|-----------------------------|-----------------------------------|-------------------|
-| Merge Sort    | `sorting.js`      | Sort by date / amount       | O(n log n)                        | O(n)              |
-| Binary Search | `searching.js`    | Date-range lookup           | O(log n) per boundary             | O(1)              |
-| HashMap (Map) | `aggregator.js`   | Category / month totals     | O(n)                               | O(k)              |
-| Set           | `uniqueSet.js`    | Unique categories           | O(n) build, O(1) lookup            | O(k)              |
-| Max-Heap      | `topExpenses.js`  | Top-N expenses              | O(n log n) build, O(k log n) extract | O(n)            |
-
----
-
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js ≥ 18
+- Node.js 18+
 - npm
-- A MongoDB instance (local or a hosted service such as MongoDB Atlas)
+- MongoDB (local or MongoDB Atlas)
 
 ### Installation
 
 ```bash
-git clone <repo-url>
-cd project-root
+git clone https://github.com/sshailaja03/AI-Expense-Tracker.git
+cd AI-Expense-Tracker
 
-# install backend dependencies
 cd server
 npm install
 
-# install frontend dependencies
 cd ../client
 npm install
 ```
 
 ### Environment Variables
 
-Create a `.env` file in `server/` with the following:
+Create `server/.env`:
 
-```
+```env
 MONGODB_URI=<your-mongodb-connection-string>
 PORT=5000
-AI_API_KEY=<your-ai-provider-key>   # required only for the AI insight feature
+AI_API_KEY=<your-ai-provider-key>
 ```
+
+Never commit real API keys or database credentials.
 
 ### Running Locally
 
+Start the backend:
+
 ```bash
-# start the backend
 cd server
 npm run dev
+```
 
-# in a separate terminal, start the frontend
+Start the frontend in another terminal:
+
+```bash
 cd client
 npm run dev
 ```
 
----
+## Testing the DSA Layer
 
-## Running the DSA Test Suite
-
-The DSA engine can be exercised independently of the database or HTTP layer using the included demo script, which runs all six modules against a fixed sample dataset:
+The DSA modules can be exercised independently of the database and HTTP layer:
 
 ```bash
 npm run test:dsa
 ```
 
-This executes `demo.js`, printing the results of merge sort, binary search, hashmap aggregation, set operations, and max-heap extraction to the console — useful both for manual verification and as a quick reference when explaining the algorithms.
+This validates the core sorting, searching, aggregation, set, and heap operations against a sample dataset.
 
----
+## Engineering Takeaways
+
+This project demonstrates:
+
+- Applying DSA concepts to product features
+- Separating business logic from infrastructure
+- Designing reusable algorithmic modules
+- Reasoning about time and space complexity
+- Building a full-stack application around a real-world problem
+- Integrating AI into an existing application workflow
+- Handling configuration securely through environment variables
 
 ## Roadmap
 
-- Replace the current all-elements max-heap with a fixed-size min-heap (O(n log k)) for top-N retrieval at scale
-- Add MongoDB indexes to complement in-memory algorithms as the dataset grows
-- Persist and cache aggregation results server-side instead of recomputing per request
-- Expand AI insight generation to include predictive/trend-based observations
+- Optimize top-N ranking with a fixed-size min-heap
+- Add database indexes for larger datasets
+- Cache frequently requested aggregations
+- Expand AI insights with trend and predictive analysis
+- Add broader automated API and integration coverage
+
+## Collaboration & Maintenance
+
+This repository originated as a collaborative project and is currently maintained under **Shailaja Singh's GitHub profile**. See the commit history for the project's development timeline and contributions.
 
 ---
-
-## Author
-
-Vaishnavi Saw AND Shailaja Singh
+**Shailaja Singh** · Software Engineering Student · C++ · DSA · Full-Stack Development
